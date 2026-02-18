@@ -167,42 +167,46 @@ def sync_users_from_gdrive(root_folder_id):
         username = user_folder['name'].lower()
         print(f"✓ Processing user folder: {username}", file=sys.stderr)
         
-        # List files in user folder
-        files = list_files_in_folder(service, user_folder['id'])
-        
+        # Recursively collect files from user folder and subfolders
         user_files = []
-        for file in files:
-            # Skip folders
-            if file['mimeType'] == 'application/vnd.google-apps.folder':
-                continue
-            
-            # Get file size and extension
-            size = int(file.get('size', 0))
-            name = file['name']
-            ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
-            
-            # Determine file category
-            category = get_file_category(ext)
-            
-            # Make file publicly accessible
-            try:
-                service.permissions().create(
-                    fileId=file['id'],
-                    body={'role': 'reader', 'type': 'anyone'},
-                    fields='id'
-                ).execute()
-            except Exception as e:
-                print(f"Note: Could not set permissions for {file['id']}: {e}", file=sys.stderr)
-            
-            user_files.append({
-                'name': name,
-                'id': file['id'],
-                'size': format_bytes(size),
-                'ext': ext,
-                'category': category
-            })
         
-        users_data[username] = sorted(user_files, key=lambda f: f['name'])
+        def collect_files(folder_id, folder_path=''):
+            """Recursively list files, tracking folder path."""
+            items = list_files_in_folder(service, folder_id)
+            for item in items:
+                if item['mimeType'] == 'application/vnd.google-apps.folder':
+                    subfolder_name = item['name']
+                    sub_path = f"{folder_path}/{subfolder_name}" if folder_path else subfolder_name
+                    print(f"  ✓ Entering subfolder: {sub_path}", file=sys.stderr)
+                    collect_files(item['id'], sub_path)
+                else:
+                    size = int(item.get('size', 0))
+                    name = item['name']
+                    ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+                    category = get_file_category(ext)
+                    
+                    # Make file publicly accessible
+                    try:
+                        service.permissions().create(
+                            fileId=item['id'],
+                            body={'role': 'reader', 'type': 'anyone'},
+                            fields='id'
+                        ).execute()
+                    except Exception as e:
+                        print(f"Note: Could not set permissions for {item['id']}: {e}", file=sys.stderr)
+                    
+                    user_files.append({
+                        'name': name,
+                        'id': item['id'],
+                        'size': format_bytes(size),
+                        'ext': ext,
+                        'category': category,
+                        'folder': folder_path
+                    })
+        
+        collect_files(user_folder['id'])
+        
+        users_data[username] = sorted(user_files, key=lambda f: (f.get('folder', ''), f['name']))
         print(f"  ✓ Found {len(user_files)} files for {username}", file=sys.stderr)
     
     print(f"✓ Sync complete: {len(users_data)} users", file=sys.stderr)

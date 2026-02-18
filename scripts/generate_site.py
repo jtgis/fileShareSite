@@ -102,7 +102,7 @@ def generate_index_html(users_data, users_config):
     user_files_encrypted = {}
     for username, files in users_data.items():
         if isinstance(files, list):
-            sorted_files = sorted(files, key=lambda f: (f.get('category', 'other'), f.get('name', '')))
+            sorted_files = sorted(files, key=lambda f: (f.get('folder', ''), f.get('category', 'other'), f.get('name', '')))
         else:
             sorted_files = []
         plaintext = json.dumps(sorted_files)
@@ -491,6 +491,71 @@ def generate_index_html(users_data, users_config):
             text-align: center;
         }
 
+        .folder-heading {
+            font-size: 14px;
+            color: #999;
+            letter-spacing: 1px;
+            padding: 18px 0 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-top: 12px;
+        }
+
+        .folder-heading svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: #999;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .folder-heading span {
+            vertical-align: middle;
+        }
+
+        .detail-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-btn {
+            display: inline-block;
+            padding: 6px 16px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            letter-spacing: 1px;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .nav-btn:hover {
+            color: #333;
+            border-color: #333;
+            background: transparent;
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.3;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .nav-counter {
+            color: #aaa;
+            font-size: 12px;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 10px;
@@ -627,6 +692,11 @@ def generate_index_html(users_data, users_config):
             <div class="detail-meta" id="detailFileMeta"></div>
             <div class="preview-area" id="previewArea"></div>
             <a href="#" id="downloadBtn" class="download-btn" download>download</a>
+            <div class="detail-nav">
+                <button class="nav-btn" id="prevBtn" onclick="navFile(-1)">← prev</button>
+                <span class="nav-counter" id="navCounter"></span>
+                <button class="nav-btn" id="nextBtn" onclick="navFile(1)">next →</button>
+            </div>
         </div>
     </div>
 
@@ -736,8 +806,21 @@ def generate_index_html(users_data, users_config):
                 grid.innerHTML = '<p class="no-files">no files available</p>';
                 return;
             }}
-            let html = '<table class="file-table">';
+            const folderIcon = '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+            let html = '';
+            let lastFolder = null;
             currentFiles.forEach((f, i) => {{
+                const folder = f.folder || '';
+                if (folder !== lastFolder) {{
+                    if (lastFolder !== null) html += '</table>';
+                    if (folder) {{
+                        html += '<div class="folder-heading">' + folderIcon + '<span>' + folder + '</span></div>';
+                    }} else if (lastFolder !== null || currentFiles.some(x => x.folder)) {{
+                        html += '<div class="folder-heading"><span>files</span></div>';
+                    }}
+                    html += '<table class="file-table">';
+                    lastFolder = folder;
+                }}
                 html += '<tr class="file-row">';
                 html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + f.category + '</span></td>';
                 html += '<td class="col-name">' + f.name + '</td>';
@@ -752,10 +835,13 @@ def generate_index_html(users_data, users_config):
             grid.innerHTML = html;
         }}
 
+        let currentIndex = -1;
+
         function openFile(index) {{
             const file = currentFiles[index];
             if (!file) return;
 
+            currentIndex = index;
             history.pushState({{view: 'detail', index: index}}, '');
 
             document.getElementById('filesSection').classList.remove('active');
@@ -764,7 +850,8 @@ def generate_index_html(users_data, users_config):
 
             document.getElementById('detailFileName').textContent = file.name;
             document.getElementById('detailIcon').innerHTML = fileIcon(file.category);
-            document.getElementById('detailFileMeta').textContent = file.category + ' \u00b7 ' + file.size;
+            const folderLabel = file.folder ? file.folder + ' \u00b7 ' : '';
+            document.getElementById('detailFileMeta').textContent = folderLabel + file.category + ' \u00b7 ' + file.size;
 
             const preview = document.getElementById('previewArea');
             const downloadLink = 'https://drive.google.com/uc?export=download&id=' + file.id;
@@ -782,6 +869,18 @@ def generate_index_html(users_data, users_config):
             }}
 
             document.getElementById('downloadBtn').href = downloadLink;
+
+            // Update prev/next nav
+            document.getElementById('prevBtn').classList.toggle('disabled', index <= 0);
+            document.getElementById('nextBtn').classList.toggle('disabled', index >= currentFiles.length - 1);
+            document.getElementById('navCounter').textContent = (index + 1) + ' / ' + currentFiles.length;
+        }}
+
+        function navFile(delta) {{
+            const newIndex = currentIndex + delta;
+            if (newIndex >= 0 && newIndex < currentFiles.length) {{
+                openFile(newIndex);
+            }}
         }}
 
         function backToList() {{

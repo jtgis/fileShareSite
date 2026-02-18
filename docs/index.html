@@ -376,6 +376,71 @@
             text-align: center;
         }
 
+        .folder-heading {
+            font-size: 14px;
+            color: #999;
+            letter-spacing: 1px;
+            padding: 18px 0 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-top: 12px;
+        }
+
+        .folder-heading svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: #999;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .folder-heading span {
+            vertical-align: middle;
+        }
+
+        .detail-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .nav-btn {
+            display: inline-block;
+            padding: 6px 16px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            letter-spacing: 1px;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .nav-btn:hover {
+            color: #333;
+            border-color: #333;
+            background: transparent;
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.3;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .nav-counter {
+            color: #aaa;
+            font-size: 12px;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 10px;
@@ -503,12 +568,17 @@
             <div class="detail-meta" id="detailFileMeta"></div>
             <div class="preview-area" id="previewArea"></div>
             <a href="#" id="downloadBtn" class="download-btn" download>download</a>
+            <div class="detail-nav">
+                <button class="nav-btn" id="prevBtn" onclick="navFile(-1)">← prev</button>
+                <span class="nav-counter" id="navCounter"></span>
+                <button class="nav-btn" id="nextBtn" onclick="navFile(1)">next →</button>
+            </div>
         </div>
     </div>
 
     <script>
         const USER_HASHES = {"testuser": "b55c8792d1ce458e279308835f8a97b580263503e76e1998e279703e35ad0c2e", "seliger": "e6a97ab3a50a32a588983047c4d19d9841e54266dc88deff7e8985608ad1ef2d"};
-        const USER_FILES_ENC = {"seliger": "Pk1DV1YMBxFbFRICUl8ER1kWU0hUEhgXQV0AEwNEGwlEXFNPXlVucgoAW3VJCSEIBSoBCFlvcHx/MShDJA5dLUcaQRtECBhWQw8QQwcLTw0Yc3saHxAWUhtARgsZRlNIUxNJFRZRV0IBBFdKHUdcRhUMVVhfUBRNFEEfEwsHXwFHDEEbRBUQUhZXVRNBS09fSF8bFBMSXVNBDkQTCFRBblBbIGxbAk5DJTNUWhQEDzBAHG5XdAZYcX0wC1JXRB5ER0UIQ1JDWBNDBwJPARIqdxoUGRpWSEAVWRRGW0kDGxQUEwZUQFdRWRYaGgJERw8LVgJdG0Vo", "testuser": "OU4XDVlaXBBeEUEDXVldOldPWF5AVF1seDYLPgx6JRUQARsYXkUDEUkXFAxVGwMYRwMFXVpVBQZ9W1VcfisEC1JCUREOf0wLDGQOKUFzbioGBxsfEBpLWk8DGlsZFVcbCRB/dBEZEBEAT0JHCxkbVRUBFRUXElAER1AGC0IaEF9CF1QWXF5WEBkdQx4WW1kIVxUDExJeUV9QOV0ZWFoSWV1veGZ0agIGVQddJx9TSV9HHhcbXlQRXxMXUAcHUlUGKVZDVmxBY0M0WhchelNKAwRdVwV6fGFbaghBQxUXQEZRSlcUCRUSAUsDFihzGxUYR1dPTRUKE0dZRQZGHEMQBgNBUARXRUAQXhFBDFlUXwAQShUTSxpWUlgDGlsZFQRcVFUfU0tUXUMJUmk1dX9mCShwGUlTVhFJExcIABJZEkdTUWc8f34JSC5XVBVsREo9SwQNZ2JzcWBeUUALbG49TAESHhYRRllJABUMRRMICQlSHAAZfHIRSRMXBBxEQQhFQEVRBRobGRAHUBcAU1pKHBANGRFAXF4RSEoYGhtZA1hdEggWEVNZXwBoUx1QVElUAG16aQNvAlwBBT5VCC51Sw9FAUEUFxtbABNZRRYEVwgGY31rfQhoAWxfARVBRwkGbUdYQ1BqflghRkZcS38bFEUQRFBNVRFfExdQUx5TEiggFxlDGlJBRkYLQ0dZRQxHHhcbUFFMXVRaFEFDAxdAQ1FUV1kRSG0="};
+        const USER_FILES_ENC = {"testuser": "OU4XDVlaXBBeEUEDXVldSFdPWF5AVF1sZSJ+Pgh6IBtIVFQUHxUSWgEVDEUTCF1qOnV+CU16VVJDbRAWaBoBUTZnfiprXA5KDmQ6Ok0MGkkSFUpaSl0aCRVECVEIAEwCGHtwFB8VElYdQxRfERtJXAMQGxkVU1IRVlIOFklBCEVARVEFGhsZEAJeDwFRRxpfEhUbThwYQxFbB1UEGw1CF15ZXlNsUEhSCEdaAG50aQs6B3p+FxgCTB1YEVcSTxJHC1EXWRgVCAAAXAZTV3tWUQp5cQVeCE9XR1BwFABfN1h0RXRgfAEAEUkXFBZYQ1waXxIVDBkBEyhxF01EEgZKEUAPFUFVRwoQSBFBBlVBXQJdRUARChgaUkACUQ4bG0IXXl9eUlZHEglFFVsQQlBaGhgeF0IVXlIIVhdbRBIFWwkHalAbWVpJXgFuKTVzagpQAgdScR5SSFQXShhDUFNADxgSA1UEBFdQLlRAUGVPY0k1WUN9eVZBAwVfD1J6J2sNPVtMQRQXG0ENSwZHDhUaVxwDGX5yGhQTFwNAFRsNQhdSQFUUHxUSUARDUwJeS0AaXxIVUFpRVAARGUFGVgxeAQdHF1kYFUlaC0UMFhZIFEVJFVdSXV0aCRVEXghVUj1QQFFfRl9Qb341A2lUCAsJZ1QKen4ZXUNRERlBRlkHEF9CFwQMVQNtdjx8UzUGbAFcRk9JWANtT1lABWcvUnMTRQFKdBQfFRJADE1TRwsZGwlSHAcZenIRSRMXBBxEQQhFQFhFVxobGRAHUBcAU1pKHBANGRFGUVxWWkQUQRtRDVlcVUAUCRUSRQxTUwpCG0Rl"};
 
         function xorDecrypt(b64, key) {
             const raw = atob(b64);
@@ -612,8 +682,21 @@
                 grid.innerHTML = '<p class="no-files">no files available</p>';
                 return;
             }
-            let html = '<table class="file-table">';
+            const folderIcon = '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
+            let html = '';
+            let lastFolder = null;
             currentFiles.forEach((f, i) => {
+                const folder = f.folder || '';
+                if (folder !== lastFolder) {
+                    if (lastFolder !== null) html += '</table>';
+                    if (folder) {
+                        html += '<div class="folder-heading">' + folderIcon + '<span>' + folder + '</span></div>';
+                    } else if (lastFolder !== null || currentFiles.some(x => x.folder)) {
+                        html += '<div class="folder-heading"><span>files</span></div>';
+                    }
+                    html += '<table class="file-table">';
+                    lastFolder = folder;
+                }
                 html += '<tr class="file-row">';
                 html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + f.category + '</span></td>';
                 html += '<td class="col-name">' + f.name + '</td>';
@@ -628,10 +711,13 @@
             grid.innerHTML = html;
         }
 
+        let currentIndex = -1;
+
         function openFile(index) {
             const file = currentFiles[index];
             if (!file) return;
 
+            currentIndex = index;
             history.pushState({view: 'detail', index: index}, '');
 
             document.getElementById('filesSection').classList.remove('active');
@@ -640,7 +726,8 @@
 
             document.getElementById('detailFileName').textContent = file.name;
             document.getElementById('detailIcon').innerHTML = fileIcon(file.category);
-            document.getElementById('detailFileMeta').textContent = file.category + ' · ' + file.size;
+            const folderLabel = file.folder ? file.folder + ' · ' : '';
+            document.getElementById('detailFileMeta').textContent = folderLabel + file.category + ' · ' + file.size;
 
             const preview = document.getElementById('previewArea');
             const downloadLink = 'https://drive.google.com/uc?export=download&id=' + file.id;
@@ -658,6 +745,18 @@
             }
 
             document.getElementById('downloadBtn').href = downloadLink;
+
+            // Update prev/next nav
+            document.getElementById('prevBtn').classList.toggle('disabled', index <= 0);
+            document.getElementById('nextBtn').classList.toggle('disabled', index >= currentFiles.length - 1);
+            document.getElementById('navCounter').textContent = (index + 1) + ' / ' + currentFiles.length;
+        }
+
+        function navFile(delta) {
+            const newIndex = currentIndex + delta;
+            if (newIndex >= 0 && newIndex < currentFiles.length) {
+                openFile(newIndex);
+            }
         }
 
         function backToList() {
