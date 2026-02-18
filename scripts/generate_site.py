@@ -26,64 +26,58 @@ def render_file_card(file):
     
     if file['category'] == 'video':
         return f'''
-        <div class="file-card video-card">
-            <div class="file-header">
-                <span class="file-icon">{icon}</span>
-                <span class="file-name">{name}</span>
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-name">{name}</div>
+                <div class="file-size">{size}</div>
             </div>
-            <iframe src="{link}" width="100%" height="200" frameborder="0" allowfullscreen style="border-radius: 8px; margin: 10px 0;"></iframe>
-            <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">Open in New Tab</a>
+            <video controls style="width: 100%; max-width: 600px; margin: 10px 0;">
+                <source src="{link}" type="video/mp4">
+                Your browser does not support the video element.
+            </video>
         </div>
         '''
     elif file['category'] == 'audio':
         return f'''
-        <div class="file-card audio-card">
-            <div class="file-header">
-                <span class="file-icon">{icon}</span>
-                <span class="file-name">{name}</span>
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-name">{name}</div>
+                <div class="file-size">{size}</div>
             </div>
-            <div class="file-size">{size}</div>
-            <audio controls style="width: 100%; margin: 10px 0;">
+            <audio controls style="width: 100%; max-width: 600px; margin: 10px 0;">
                 <source src="{link}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
-            <a href="{link}" download class="file-link">Download</a>
         </div>
         '''
     elif file['category'] == 'image':
         return f'''
-        <div class="file-card image-card">
-            <div class="file-header">
-                <span class="file-icon">{icon}</span>
-                <span class="file-name">{name}</span>
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-name">{name}</div>
+                <div class="file-size">{size}</div>
             </div>
-            <img src="{link}" alt="{name}" class="file-image" loading="lazy">
-            <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">View Full Size</a>
+            <img src="{link}" alt="{name}" style="max-width: 600px; width: 100%; margin: 10px 0; border: 1px solid #ddd;" loading="lazy">
         </div>
         '''
     elif file['category'] == 'pdf':
         return f'''
-        <div class="file-card pdf-card">
-            <div class="file-header">
-                <span class="file-icon">{icon}</span>
-                <span class="file-name">{name}</span>
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-name">{name}</div>
+                <div class="file-size">{size}</div>
             </div>
-            <iframe src="{link}" width="100%" height="300" frameborder="0" style="border-radius: 8px; margin: 10px 0;"></iframe>
-            <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">Open in New Tab</a>
+            <a href="{link}" target="_blank">Open PDF</a>
         </div>
         '''
     else:
         return f'''
-        <div class="file-card other-card">
-            <div class="file-header">
-                <span class="file-icon">{icon}</span>
-                <span class="file-name">{name}</span>
+        <div class="file-item">
+            <div class="file-info">
+                <div class="file-name">{name}</div>
+                <div class="file-size">{size}</div>
             </div>
-            <div class="file-size">{size}</div>
-            <a href="{link}" download class="file-link">Download</a>
+            <a href="{link}" download>Download</a>
         </div>
         '''
 
@@ -115,40 +109,20 @@ def generate_index_html(users_data, users_config):
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
             padding: 20px;
         }
 
         .container {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1200px;
-            width: 100%;
-            padding: 40px;
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            border: 1px solid #ddd;
         }
 
         .login-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
             max-width: 400px;
             margin: 0 auto;
         }
@@ -159,63 +133,49 @@ def generate_index_html(users_data, users_config):
 
         h1 {
             color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 28px;
+            margin-bottom: 20px;
+            font-size: 24px;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            margin-bottom: 15px;
         }
 
         label {
-            color: #555;
-            font-weight: 600;
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
             font-size: 14px;
         }
 
         input[type="text"],
         input[type="password"] {
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-size: 14px;
         }
 
         input[type="text"]:focus,
         input[type="password"]:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #333;
         }
 
         button {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 100%;
+            padding: 10px;
+            background: #333;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
         }
 
         .error {
-            color: #e74c3c;
-            font-size: 14px;
-            text-align: center;
+            color: red;
+            font-size: 13px;
+            margin-top: 10px;
         }
 
         .files-section {
@@ -231,149 +191,69 @@ def generate_index_html(users_data, users_config):
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
         }
 
         .welcome-text {
             color: #333;
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 16px;
         }
 
         .logout-btn {
+            width: auto;
             padding: 8px 16px;
-            background: #95a5a6;
-            font-size: 14px;
+            background: #666;
+            font-size: 13px;
         }
 
-        .logout-btn:hover {
-            box-shadow: 0 5px 15px rgba(149, 165, 166, 0.4);
+        .files-list {
+            list-style: none;
         }
 
-        .files-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+        .file-item {
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
         }
 
-        @media (max-width: 768px) {
-            .files-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 22px;
-                margin-bottom: 20px;
-            }
+        .file-item:last-child {
+            border-bottom: none;
         }
 
-        .file-card {
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .file-card:hover {
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            border-color: #667eea;
-            transform: translateY(-4px);
-        }
-
-        .file-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            word-break: break-word;
-        }
-
-        .file-icon {
-            font-size: 24px;
-            flex-shrink: 0;
+        .file-info {
+            margin-bottom: 10px;
         }
 
         .file-name {
             color: #333;
-            font-weight: 600;
-            font-size: 14px;
-            flex: 1;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
         }
 
         .file-size {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .file-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            max-height: 200px;
-            object-fit: cover;
-        }
-
-        .file-link {
-            display: inline-block;
-            padding: 8px 12px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 12px;
-            text-align: center;
-            transition: background 0.3s;
-        }
-
-        .file-link:hover {
-            background: #764ba2;
-        }
-
-        audio {
-            width: 100%;
-            height: 32px;
+            color: #666;
+            font-size: 13px;
         }
 
         .no-files {
-            color: #888;
+            color: #666;
             text-align: center;
             padding: 40px 20px;
-            font-style: italic;
         }
 
-        .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            text-align: center;
-            color: #888;
-            font-size: 12px;
-        }
-
-        .footer a {
-            color: #667eea;
+        a {
+            color: #0066cc;
             text-decoration: none;
         }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }"""
+"""
     
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Share Site</title>
+    <title>File Share</title>
     <style>
 {css}
     </style>
@@ -381,16 +261,16 @@ def generate_index_html(users_data, users_config):
 <body>
     <div class="container">
         <div class="login-section" id="loginSection">
-            <h1>📁 File Share Site</h1>
+            <h1>Login</h1>
             
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+                <label>Username</label>
+                <input type="text" id="username" autocomplete="username">
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+                <label>Password</label>
+                <input type="password" id="password" autocomplete="current-password">
             </div>
             
             <button onclick="login()">Login</button>
@@ -399,15 +279,11 @@ def generate_index_html(users_data, users_config):
 
         <div class="files-section" id="filesSection">
             <div class="user-header">
-                <div class="welcome-text">👋 Welcome, <span id="displayName"></span>!</div>
+                <div class="welcome-text">Welcome, <span id="displayName"></span></div>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
             
-            <div class="files-grid" id="filesGrid"></div>
-            
-            <div class="footer">
-                <p>If you have any issues, please contact us at <a href="mailto:support@example.com">support@example.com</a></p>
-            </div>
+            <div class="files-list" id="filesGrid"></div>
         </div>
     </div>
 
