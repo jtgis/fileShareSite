@@ -635,6 +635,7 @@ def generate_index_html(users_data, users_config):
             display: flex;
             align-items: center;
             padding: 0 16px;
+            padding-bottom: env(safe-area-inset-bottom, 0);
             box-sizing: border-box;
             background: rgba(0,0,0,0.9);
             z-index: 10000;
@@ -786,30 +787,40 @@ def generate_index_html(users_data, users_config):
 
             .fullscreen-overlay .fs-bar {
                 height: auto;
-                min-height: 52px;
+                min-height: 60px;
                 flex-wrap: wrap;
-                gap: 6px;
-                padding: 8px 12px;
+                padding: 12px 16px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+                justify-content: center;
             }
 
             .fullscreen-overlay .fs-content {
-                bottom: 70px;
+                bottom: 100px;
             }
 
             .fullscreen-overlay .fs-bar .fs-name {
                 width: 100%;
                 flex: none;
                 font-size: 12px;
-                margin-right: 0;
+                margin: 0 0 8px 0;
+                text-align: center;
             }
 
             .fullscreen-overlay .fs-bar .fs-counter {
-                font-size: 11px;
+                font-size: 12px;
+                margin: 0 8px 0 0;
+                order: -1;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 8px;
             }
 
             .fullscreen-overlay .fs-bar button {
-                padding: 8px 16px;
-                font-size: 14px;
+                padding: 12px 20px;
+                font-size: 15px;
+                margin: 0 4px;
+                flex: 1;
+                min-width: 80px;
             }
         }
 """
