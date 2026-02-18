@@ -1,245 +1,291 @@
-# File Share Site
+# File Share Site - GitHub + Google Drive Edition
 
-A minimal, password-protected file sharing platform built with **Python + Flask**.
+A **static file sharing site** that combines **GitHub Pages** for hosting and **Google Drive** for file storage.
 
-Each **user account** is associated with a folder of files they can access.
-**Admin** accounts can manage users and files but do not have their own collections.
+## 🎯 How It Works
 
-The site is designed to be:
+1. **GitHub Actions** runs daily and syncs files from Google Drive
+2. Generates a static HTML site with password-protected user folders
+3. Deploys to **GitHub Pages** (free hosting)
+4. Users view/download files hosted on Google Drive (no bandwidth charges)
 
-- Easy to deploy on Debian
-- Mobile-friendly
-- Lightweight
-- Private (no public upload)
-- Ideal for hosting family archives, private collections, or customer media
+## ✨ Features
 
----
-
-## 🚀 Features
-
-### For Users
-- Login with username + password
-- View/download files in their assigned directory
-- Supported previews:
-  - 🎥 Video (`.mp4`, `.webm`, `.m4v`, `.ogg`)
-  - 🎵 Audio (`.mp3`, `.m4a`, `.wav`, `.flac`)
-  - 🖼️ Images (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`)
-  - 📄 PDF
-- Mobile-optimized UI (files stack into cards)
-- Long filenames wrap properly on mobile
-- Footer help link:
-  _“If you have any issues, please see our help guide or contact jarrett.totton@gmail.com.”_
-
-### For Admin
-- Admin-only accounts (no media directory)
-- Add/remove users
-- Reset passwords
-- Manage user collections:
-  - View all files
-  - Preview as the user
-  - Delete files
-- Prevents deletion of last admin
+- 🔐 Password-protected login (no Google accounts required)
+- 🎥 Video previews (`.mp4`, `.webm`, `.m4v`, `.ogg`)
+- 🎵 Audio player (`.mp3`, `.m4a`, `.wav`, `.flac`)
+- 🖼️ Image gallery (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`)
+- 📄 PDF viewer (`.pdf`)
+- 📥 Direct Google Drive download links for all files
+- 📱 Mobile-responsive design
+- ⚡ Zero server costs
+- 🔄 Auto-updates daily
 
 ---
 
-## 🏗️ Tech Stack
+## 🚀 Setup Instructions
 
-| Component     | Choice |
-|---------------|---------|
-| Language      | Python 3 |
-| Framework     | Flask |
-| Database      | SQLite (local `.db`) |
-| Auth          | Werkzeug password hashing |
-| Frontend      | Jinja2 templates + CSS |
-| Storage       | Files on disk (`collections/`) |
+### 1. Set Up Google Drive Structure
 
----
+Create this folder structure in your Google Drive:
 
-## 📦 Installation
-
-On a Debian server:
-
-```bash
-sudo apt update
-sudo apt install -y python3-venv python3-pip sqlite3 git
+```
+My Drive/
+  └── fileShareSite/          (root folder)
+      └── users/
+          ├── alice/          (user folders)
+          │   ├── photo1.jpg
+          │   └── video.mp4
+          └── bob/
+              └── document.pdf
 ```
 
----
+- Each username becomes a folder (e.g., `alice`, `bob`)
+- Put files in their respective folders
+- The app detects any file type
 
-### 1. Download the project
+### 2. Set Up Google Drive API
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a **new project**
+3. Enable the **Google Drive API**:
+   - APIs & Services → Library
+   - Search for "Google Drive API"
+   - Click "Enable"
+4. Create a **Service Account**:
+   - APIs & Services → Credentials
+   - Create Credentials → Service Account
+   - Fill in details (any name is fine)
+   - Skip optional steps, click "Create"
+5. **Create a key**:
+   - In the Service Account, click on the "Keys" tab
+   - Create → JSON
+   - Download the JSON file (keep it safe!)
+
+6. **Share Google Drive folder with the service account**:
+   - Get the `client_email` from the JSON file (looks like: `something@something.iam.gserviceaccount.com`)
+   - In Google Drive, right-click your `fileShareSite` folder → Share
+   - Add the service account email as an editor
+
+### 3. Get Your Google Drive Folder ID
+
+1. Open your `fileShareSite` folder in Google Drive
+2. The URL will look like: `https://drive.google.com/drive/folders/XXXXXXXXXXXXX`
+3. Copy the ID (the `XXXXXXXXXXXXX` part)
+
+### 4. Set Up GitHub Secrets
+
+1. Go to your repository settings
+2. Secrets and Variables → Actions
+3. Create two secrets:
+
+| Secret Name | Value |
+|-------------|-------|
+| `GOOGLE_DRIVE_CREDENTIALS` | Paste the entire contents of the JSON file from Google Cloud |
+| `GDRIVE_ROOT_FOLDER_ID` | Paste the folder ID from the `fileShareSite` folder |
+
+### 5. Enable GitHub Pages
+
+1. Go to repository Settings → Pages
+2. Set **Source** to `Deploy from a branch`
+3. Set **Branch** to `gh-pages` → `/(root)`
+4. Save
+
+### 6. Add Your First User
 
 ```bash
-git clone https://github.com/YOURNAME/your-repo.git
+# Clone the repo locally
+git clone https://github.com/YOUR_GITHUB_USERNAME/your-repo.git
 cd your-repo
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Add a user (username and password)
+python scripts/add_user.py alice mypassword
+
+# Commit and push
+git add data/users.json
+git commit -m "Add alice user"
+git push origin main
 ```
 
-Or, if using the auto-builder script:
+The GitHub Action will automatically run and generate the site!
+
+### 7. View Your Site
+
+Once the GitHub Action completes:
+- Your site will be available at: `https://YOUR_GITHUB_USERNAME.github.io/your-repo`
+- Check the "Actions" tab to see the build status
+
+---
+
+## 📝 Managing Users
+
+### Add a User
 
 ```bash
-bash setup_media_portal.sh
-cd ~/media_portal
+python scripts/add_user.py username password
+git add data/users.json
+git commit -m "Add username user"
+git push origin main
 ```
 
----
+### Remove a User
 
-### 2. Install dependencies
+1. Open `data/users.json`
+2. Remove the user's entry:
+   ```json
+   {
+       "alice": { "password_hash": "..." },
+       "bob": { "password_hash": "..." }
+   }
+   ```
+3. Delete the user's folder from Google Drive
+4. Commit and push
+
+### Change a User's Password
 
 ```bash
-./install.sh
-```
-
-This will:
-
-- Create a virtualenv
-- Install requirements
-- Create (`site.db`) if missing
-- Prompt to create accounts (admin or user)
-
----
-
-### 3. Run the server
-
-```bash
-./run.sh
-```
-
-Visit:
-
-```
-http://YOUR-SERVER-IP:8000
+python scripts/add_user.py username newpassword
+git add data/users.json
+git commit -m "Update username password"
+git push origin main
 ```
 
 ---
 
-## 👤 Accounts
+## 🔄 Syncing Files
 
-### Create accounts later
+The site **updates automatically every day at 1 AM UTC**. 
 
-```bash
-source venv/bin/activate
-python db_init.py
+To trigger an update manually:
+
+1. Go to Actions tab
+2. Click "Generate Static Site from Google Drive"
+3. Click "Run workflow"
+
+Or simply:
+- Push to `main` (any change triggers a rebuild)
+- Edit `data/users.json` and push
+
+---
+
+## 📱 Mobile Support
+
+The site is fully mobile-responsive:
+- Files display as stacked cards
+- Images are optimized for mobile viewing
+- Audio/video players work on all devices
+
+---
+
+## 🛡️ Security Notes
+
+1. **Passwords are hashed** using SHA-256 in the browser (not sent to server)
+2. **Google Drive token is never exposed** to users (only used on GitHub Actions)
+3. **Static site** means no server to hack (GitHub Pages is extremely secure)
+4. **Shareable links** to Google Drive are read-only for your users
+5. Keep your repo **private** if you want to hide the list of users
+
+---
+
+## ❓ Troubleshooting
+
+### Action fails with "Could not find 'users' folder"
+
+- Make sure your Google Drive folder structure matches exactly:
+  ```
+  fileShareSite/
+    └── users/
+  ```
+- Double-check the folder ID in secrets
+
+### Files not appearing on site
+
+1. Check the GitHub Actions log (Actions tab)
+2. Make sure files are in user folders (e.g., `users/alice/photo.jpg`)
+3. Wait for the daily auto-run or manually trigger the workflow
+
+### Login doesn't work
+
+- Check that the username exists in `data/users.json`
+- Password is case-sensitive
+- Clear browser cache and try again
+
+### Images/videos don't load
+
+- Make sure the files are in the correct folder in Google Drive
+- File names should not have special characters
+- Check that the service account has access to the files
+
+---
+
+## 🔧 Architecture
+
 ```
-
-- Leave **directory blank** to create an **admin**
-- Users must have a directory (creates `/collections/<dirname>/`)
-
-### Delete users manually (CLI)
-
-```bash
-sqlite3 site.db "DELETE FROM collections WHERE username='bob';"
-```
-
-(Optional) remove the files:
-
-```bash
-rm -rf collections/bob
+┌─────────────────────┐
+│   Google Drive      │
+│   (file storage)    │
+└──────────┬──────────┘
+           │
+           │ (GitHub Actions syncs daily)
+           ↓
+┌─────────────────────┐
+│  GitHub Actions     │
+│  (runs sync script) │
+└──────────┬──────────┘
+           │
+           │ (generates HTML)
+           ↓
+┌─────────────────────┐
+│  GitHub Pages       │
+│  (static website)   │
+└──────────┬──────────┘
+           │
+           │ (users login)
+           ↓
+┌─────────────────────┐
+│  User's Browser     │
+│  (views files)      │
+└─────────────────────┘
 ```
 
 ---
 
-## 📁 Uploading Files
-
-For a user with directory `family_a`, put files here:
+## 📄 File Structure
 
 ```
-collections/family_a/
-```
-
-Via SCP:
-
-```bash
-scp photo.jpg root@SERVER:/root/media_portal/collections/family_a/
-```
-
-Or use SFTP (FileZilla, WinSCP, etc.).
-
----
-
-## 🎨 UI
-
-### Desktop Table View
-
-| File name         | Type  | Size  | Actions       |
-|-------------------|--------|--------|----------------|
-| video1.mp4        | 🎥 Video | 15 MB | View / Download |
-| song.mp3          | 🎵 Audio | 3 MB  | View / Download |
-| archive.zip       | 📁 Other | 9 MB  | Download        |
-
-### Mobile View
-
-Each file becomes a stacked card:
-
-```
-File name: video1.mp4
-Type: 🎥 Video
-Size: 15 MB
-[View] [Download]
+your-repo/
+├── .github/
+│   └── workflows/
+│       └── generate-site.yml    (GitHub Actions workflow)
+├── scripts/
+│   ├── add_user.py              (add users locally)
+│   ├── gdrive_sync.py           (sync from Google Drive)
+│   └── generate_site.py         (generate static HTML)
+├── data/
+│   ├── users.json               (user credentials)
+│   └── gdrive_files.json        (generated by sync)
+├── docs/                        (generated static site)
+│   └── index.html
+├── requirements.txt             (Python dependencies)
+└── README.md
 ```
 
 ---
 
-## 🛠️ Systemd Service (optional)
+## 🆘 Support
 
-```ini
-[Unit]
-Description=File Share Site
-After=network.target
+If you encounter issues:
 
-[Service]
-WorkingDirectory=/root/media_portal
-ExecStart=/root/media_portal/venv/bin/flask run --host=0.0.0.0 --port=8000
-Environment="SECRET_KEY=change-me"
-Environment="FLASK_APP=app.py"
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable:
-
-```bash
-sudo cp file_share.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable file_share
-sudo systemctl start file_share
-```
+1. Check the **Actions** tab for error logs
+2. Verify your Google Drive structure
+3. Ensure secrets are set correctly
+4. Check that the service account has folder permissions
 
 ---
 
-## 📂 Project Structure
+## 📜 License
 
-```
-media_portal/
-├── app.py
-├── db_init.py
-├── site.db
-├── install.sh
-├── run.sh
-├── templates/
-│   ├── login.html
-│   ├── dashboard.html
-│   ├── admin_dashboard.html
-│   ├── help.html
-├── static/
-│   └── style.css
-└── collections/
-    ├── family_a/
-    └── family_b/
-```
-
----
-
-## ⚠️ Security Notes
-
-- Replace the default `SECRET_KEY` in `run.sh` before deploying publicly
-- Put behind HTTPS (Nginx, Caddy, Cloudflare Tunnel, Tailscale, etc.)
-- No public upload page (only admins manage write access)
-
----
-
-## 📄 License
-
-MIT — free to use, modify, and distribute.
-
----
+MIT License - feel free to use and modify!
