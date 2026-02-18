@@ -10,5 +10,9 @@
   "wells": {
     "password_hash": "112dc0410f02e56a597d60458a0d9714c43a0784d843a87440a20e0993527d07",
     "display_name": "Wells"
+  },
+  "weed": {
+    "password_hash": "112dc0410f02e56a597d60458a0d9714c43a0784d843a87440a20e0993527d07",
+    "display_name": "Weed"
   }
 }
