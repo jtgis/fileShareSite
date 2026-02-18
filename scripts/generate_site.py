@@ -667,6 +667,9 @@ def generate_index_html(users_data, users_config):
             width: auto;
             margin: 0 0 0 8px;
             -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10001;
         }
 
         .fullscreen-overlay .fs-bar button:hover {
@@ -872,9 +875,9 @@ def generate_index_html(users_data, users_config):
         <div class="fs-bar">
             <span class="fs-name" id="fsName"></span>
             <span class="fs-counter" id="fsCounter"></span>
-            <button onclick="fsNav(-1)" id="fsPrev">← prev</button>
-            <button onclick="fsNav(1)" id="fsNext">next →</button>
-            <button onclick="exitFullscreen()">close</button>
+            <button id="fsPrev">← prev</button>
+            <button id="fsNext">next →</button>
+            <button id="fsClose">close</button>
         </div>
     </div>
 
@@ -1236,6 +1239,22 @@ def generate_index_html(users_data, users_config):
                 updateFs();
             }}
         }}
+
+        // Attach fullscreen button handlers
+        document.addEventListener('DOMContentLoaded', function() {{
+            document.getElementById('fsPrev').addEventListener('click', function(e) {{
+                e.stopPropagation();
+                fsNav(-1);
+            }});
+            document.getElementById('fsNext').addEventListener('click', function(e) {{
+                e.stopPropagation();
+                fsNav(1);
+            }});
+            document.getElementById('fsClose').addEventListener('click', function(e) {{
+                e.stopPropagation();
+                exitFullscreen();
+            }});
+        }});
 
         document.addEventListener('keydown', function(e) {{
             if (!fsActive) return;
