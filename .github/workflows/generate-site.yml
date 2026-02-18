@@ -1,0 +1,49 @@
+name: Generate Static Site from Google Drive
+
+on:
+  schedule:
+    # Run daily at 1 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'data/users.json'
+      - '.github/workflows/generate-site.yml'
+      - 'scripts/**'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client
+
+      - name: Sync files from Google Drive
+        env:
+          GOOGLE_DRIVE_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+          GDRIVE_ROOT_FOLDER_ID: ${{ secrets.GDRIVE_ROOT_FOLDER_ID }}
+        run: |
+          python scripts/gdrive_sync.py > /tmp/gdrive_files.json 2>&1
+          cat /tmp/gdrive_files.json
+          mv /tmp/gdrive_files.json data/gdrive_files.json
+
+      - name: Generate static site
+        run: |
+          python scripts/generate_site.py data/gdrive_files.json data/users.json docs/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
