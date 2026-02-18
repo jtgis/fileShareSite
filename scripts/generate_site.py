@@ -96,17 +96,16 @@ def generate_index_html(users_data, users_config):
     for username, config in users_config.items():
         user_hashes[username] = config.get('password_hash', '')
     
-    # Create file listings for each user
-    user_files_html = {}
+    # Create file data for each user (sorted by type then name)
+    user_files_data = {}
     for username, files in users_data.items():
         if isinstance(files, list):
-            files_html = ''.join(render_file_card(f) for f in files)
+            user_files_data[username] = sorted(files, key=lambda f: (f.get('category', 'other'), f.get('name', '')))
         else:
-            files_html = '<p class="no-files">No files available</p>'
-        user_files_html[username] = files_html if files_html else '<p class="no-files">No files available</p>'
+            user_files_data[username] = []
     
     user_hashes_json = json.dumps(user_hashes)
-    user_files_json = json.dumps(user_files_html)
+    user_files_json = json.dumps(user_files_data)
     
     # CSS as a separate string to avoid f-string hash issues
     css = """        * {
@@ -115,26 +114,35 @@ def generate_index_html(users_data, users_config):
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+        }
+
         body {
             font-family: 'Courier New', Courier, monospace;
-            background: #1a1a1a;
-            color: #e0e0e0;
+            background: #fafafa;
+            color: #333;
             padding: 20px;
             line-height: 1.6;
+            text-transform: lowercase;
+            font-size: 15px;
         }
 
         .container {
-            background: #2a2a2a;
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px;
-            border: 2px solid #00ff00;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+            padding: 20px;
+            overflow-x: hidden;
         }
 
         .login-section {
-            max-width: 400px;
+            max-width: 340px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 120px);
         }
 
         .login-section.hidden {
@@ -142,61 +150,66 @@ def generate_index_html(users_data, users_config):
         }
 
         h1 {
-            color: #00ff00;
+            color: #333;
             margin-bottom: 30px;
-            font-size: 24px;
-            text-transform: uppercase;
+            font-size: 20px;
+            font-weight: 400;
             letter-spacing: 2px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            width: 100%;
         }
 
         label {
             display: block;
-            color: #00ff00;
-            margin-bottom: 8px;
+            color: #999;
+            margin-bottom: 6px;
             font-size: 14px;
-            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 12px;
-            background: #1a1a1a;
-            border: 1px solid #00ff00;
-            color: #e0e0e0;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            color: #333;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         input[type="text"]:focus,
         input[type="password"]:focus {
             outline: none;
-            border-color: #00ff00;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            border-bottom-color: #333;
         }
 
         button {
             width: 100%;
-            padding: 12px;
-            background: #00ff00;
-            color: #1a1a1a;
+            padding: 10px;
+            background: #333;
+            color: #fafafa;
             border: none;
             font-size: 14px;
             font-family: 'Courier New', Courier, monospace;
-            text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 400;
             cursor: pointer;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: #555;
         }
 
         .error {
-            color: #ff6b6b;
+            color: #c44;
             font-size: 13px;
-            margin-top: 15px;
+            margin-top: 12px;
         }
 
         .files-section {
@@ -213,22 +226,29 @@ def generate_index_html(users_data, users_config):
             align-items: center;
             margin-bottom: 40px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #00ff00;
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .welcome-text {
-            color: #00ff00;
+            color: #999;
             font-size: 16px;
-            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .logout-btn {
             width: auto;
-            padding: 8px 20px;
-            background: #444;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-            font-size: 12px;
+            padding: 6px 16px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-top: 0;
+        }
+
+        .logout-btn:hover {
+            color: #333;
+            border-color: #333;
+            background: transparent;
         }
 
         .files-list {
@@ -237,7 +257,7 @@ def generate_index_html(users_data, users_config):
 
         .file-item {
             padding: 30px 0;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid #eee;
         }
 
         .file-item:last-child {
@@ -249,39 +269,302 @@ def generate_index_html(users_data, users_config):
         }
 
         .file-name {
-            color: #00ff00;
+            color: #333;
             font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin-bottom: 4px;
         }
 
         .file-size {
-            color: #888;
+            color: #aaa;
             font-size: 13px;
         }
 
         .download-btn {
             display: inline-block;
             margin-top: 10px;
-            padding: 10px 20px;
-            background: #00ff00;
-            color: #1a1a1a;
+            padding: 8px 16px;
+            background: #333;
+            color: #fafafa;
             text-decoration: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 12px;
+            font-size: 13px;
             letter-spacing: 1px;
         }
 
+        .download-btn:hover {
+            background: #555;
+        }
+
         .no-files {
-            color: #888;
+            color: #aaa;
             text-align: center;
             padding: 40px 20px;
         }
 
         a {
-            color: #00ff00;
+            color: #333;
             text-decoration: none;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .file-row {
+            cursor: default;
+            border-bottom: 1px solid #eee;
+        }
+
+        .file-row:hover {
+            background: #f0f0f0;
+        }
+
+        .file-row td {
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+
+        .file-row .col-icon {
+            width: 100px;
+            padding-right: 0;
+            text-transform: none;
+            white-space: nowrap;
+        }
+
+        .file-row .col-icon svg {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+            fill: none;
+            stroke: #999;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-right: 6px;
+        }
+
+        .file-row .col-icon .type-label {
+            color: #999;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .file-row .col-name {
+            color: #333;
+        }
+
+        .file-row .col-size {
+            color: #aaa;
+            text-align: right;
+            width: 90px;
+            font-size: 13px;
+        }
+
+        .file-row .col-actions {
+            text-align: right;
+            white-space: nowrap;
+            width: 260px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #999;
+            border: 1px solid #ddd;
+            background: transparent;
+            text-decoration: none;
+            cursor: pointer;
+            letter-spacing: 1px;
+            margin-left: 6px;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .action-btn:hover {
+            color: #333;
+            border-color: #333;
+            background: transparent;
+        }
+
+        .detail-view {
+            display: none;
+        }
+
+        .detail-view.active {
+            display: block;
+        }
+
+        .back-btn {
+            width: auto;
+            display: inline-block;
+            padding: 6px 16px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-bottom: 24px;
+            margin-top: 0;
+        }
+
+        .back-btn:hover {
+            color: #333;
+            border-color: #333;
+            background: transparent;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .detail-header svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #999;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        .detail-name {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .detail-meta {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .preview-area {
+            margin: 20px 0;
+        }
+
+        .preview-area video,
+        .preview-area audio {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .preview-area img {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .preview-area iframe {
+            width: 100%;
+            max-width: 700px;
+            height: 500px;
+            border: 1px solid #eee;
+        }
+
+        .preview-area iframe.audio-frame {
+            height: 80px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            background: #f5f5f5;
+        }
+
+        .no-preview {
+            padding: 40px;
+            color: #aaa;
+            text-align: center;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .user-header {
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+            }
+
+            .file-table,
+            .file-table tbody,
+            .file-table tr,
+            .file-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .file-row {
+                padding: 14px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .file-row td {
+                padding: 2px 0;
+            }
+
+            .file-row .col-icon {
+                width: auto;
+                margin-bottom: 2px;
+            }
+
+            .file-row .col-name {
+                font-size: 14px;
+                word-break: break-word;
+            }
+
+            .file-row .col-size {
+                text-align: left;
+                width: auto;
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            .file-row .col-actions {
+                text-align: left;
+                width: auto;
+                white-space: normal;
+            }
+
+            .action-btn {
+                margin-left: 0;
+                margin-right: 6px;
+                margin-top: 4px;
+            }
+
+            .detail-name {
+                font-size: 15px;
+                word-break: break-word;
+            }
+
+            .detail-header {
+                flex-wrap: wrap;
+            }
+
+            .preview-area iframe {
+                height: 300px;
+            }
+
+            .preview-area iframe.audio-frame {
+                height: 80px;
+            }
+
+            .preview-area img {
+                max-width: 100%;
+            }
+
+            .download-btn {
+                font-size: 12px;
+                padding: 8px 14px;
+            }
         }
 """
     
@@ -298,35 +581,58 @@ def generate_index_html(users_data, users_config):
 <body>
     <div class="container">
         <div class="login-section" id="loginSection">
-            <h1>Login</h1>
+            <h1>login</h1>
             
             <div class="form-group">
-                <label>Username</label>
+                <label>username</label>
                 <input type="text" id="username" autocomplete="username">
             </div>
             
             <div class="form-group">
-                <label>Password</label>
+                <label>password</label>
                 <input type="password" id="password" autocomplete="current-password">
             </div>
             
-            <button onclick="login()">Login</button>
+            <button onclick="login()">login</button>
             <div class="error" id="loginError"></div>
         </div>
 
         <div class="files-section" id="filesSection">
             <div class="user-header">
-                <div class="welcome-text">Welcome, <span id="displayName"></span></div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <div class="welcome-text">welcome, <span id="displayName"></span></div>
+                <button class="logout-btn" onclick="logout()">logout</button>
             </div>
             
             <div class="files-list" id="filesGrid"></div>
+        </div>
+
+        <div class="detail-view" id="detailView">
+            <button class="back-btn" onclick="backToList()">← back</button>
+            <div class="detail-header">
+                <span id="detailIcon"></span>
+                <div class="detail-name" id="detailFileName"></div>
+            </div>
+            <div class="detail-meta" id="detailFileMeta"></div>
+            <div class="preview-area" id="previewArea"></div>
+            <a href="#" id="downloadBtn" class="download-btn" download>download</a>
         </div>
     </div>
 
     <script>
         const USER_HASHES = {user_hashes_json};
         const USER_FILES = {user_files_json};
+        function fileIcon(cat) {{
+            const icons = {{
+                video: '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
+                audio: '<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>',
+                image: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+                pdf: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+                other: '<svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>'
+            }};
+            return icons[cat] || icons.other;
+        }}
+
+        let currentFiles = [];
 
         async function sha256(message) {{
             const msgBuffer = new TextEncoder().encode(message);
@@ -342,18 +648,18 @@ def generate_index_html(users_data, users_config):
             const errorDiv = document.getElementById('loginError');
             
             if (!username || !password) {{
-                errorDiv.textContent = 'Please enter username and password';
+                errorDiv.textContent = 'please enter username and password';
                 return;
             }}
 
             if (!(username in USER_HASHES)) {{
-                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.textContent = 'invalid username or password';
                 return;
             }}
 
             const passwordHash = await sha256(password);
             if (passwordHash !== USER_HASHES[username]) {{
-                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.textContent = 'invalid username or password';
                 return;
             }}
 
@@ -366,6 +672,7 @@ def generate_index_html(users_data, users_config):
             sessionStorage.clear();
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('filesSection').classList.remove('active');
+            document.getElementById('detailView').classList.remove('active');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
             document.getElementById('loginError').textContent = '';
@@ -377,18 +684,82 @@ def generate_index_html(users_data, users_config):
 
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('filesSection').classList.add('active');
+            document.getElementById('detailView').classList.remove('active');
             document.getElementById('displayName').textContent = sessionStorage.getItem('displayName');
 
-            const filesHtml = USER_FILES[username] || '<p class="no-files">No files available</p>';
-            document.getElementById('filesGrid').innerHTML = filesHtml;
+            currentFiles = USER_FILES[username] || [];
+            renderFileList();
         }}
 
-        // Check if already logged in
+        function renderFileList() {{
+            const grid = document.getElementById('filesGrid');
+            if (!currentFiles.length) {{
+                grid.innerHTML = '<p class="no-files">no files available</p>';
+                return;
+            }}
+            let html = '<table class="file-table">';
+            currentFiles.forEach((f, i) => {{
+                html += '<tr class="file-row">';
+                html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + f.category + '</span></td>';
+                html += '<td class="col-name">' + f.name + '</td>';
+                html += '<td class="col-size">' + f.size + '</td>';
+                html += '<td class="col-actions">';
+                html += '<a class="action-btn" href="#" onclick="event.preventDefault();openFile(' + i + ')">view file</a>';
+                html += '<a class="action-btn" href="https://drive.google.com/uc?export=download&id=' + f.id + '" download>download file</a>';
+                html += '</td>';
+                html += '</tr>';
+            }});
+            html += '</table>';
+            grid.innerHTML = html;
+        }}
+
+        function openFile(index) {{
+            const file = currentFiles[index];
+            if (!file) return;
+
+            history.pushState({{view: 'detail', index: index}}, '');
+
+            document.getElementById('filesSection').classList.remove('active');
+            const detail = document.getElementById('detailView');
+            detail.classList.add('active');
+
+            document.getElementById('detailFileName').textContent = file.name;
+            document.getElementById('detailIcon').innerHTML = fileIcon(file.category);
+            document.getElementById('detailFileMeta').textContent = file.category + ' \u00b7 ' + file.size;
+
+            const preview = document.getElementById('previewArea');
+            const downloadLink = 'https://drive.google.com/uc?export=download&id=' + file.id;
+
+            if (file.category === 'video') {{
+                preview.innerHTML = '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay"></iframe>';
+            }} else if (file.category === 'audio') {{
+                preview.innerHTML = '<iframe class="audio-frame" src="https://drive.google.com/file/d/' + file.id + '/preview"></iframe>';
+            }} else if (file.category === 'image') {{
+                preview.innerHTML = '<img src="https://lh3.googleusercontent.com/d/' + file.id + '" alt="' + file.name + '" loading="lazy">';
+            }} else if (file.category === 'pdf') {{
+                preview.innerHTML = '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview"></iframe>';
+            }} else {{
+                preview.innerHTML = '<div class="no-preview">preview not available</div>';
+            }}
+
+            document.getElementById('downloadBtn').href = downloadLink;
+        }}
+
+        function backToList() {{
+            document.getElementById('detailView').classList.remove('active');
+            document.getElementById('filesSection').classList.add('active');
+        }}
+
+        window.addEventListener('popstate', function(e) {{
+            if (document.getElementById('detailView').classList.contains('active')) {{
+                backToList();
+            }}
+        }});
+
         if (sessionStorage.getItem('username')) {{
             showFiles();
         }}
 
-        // Allow Enter key to submit login form
         document.getElementById('password').addEventListener('keypress', function(event) {{
             if (event.key === 'Enter') {{
                 login();

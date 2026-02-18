@@ -90,11 +90,11 @@ def get_shareable_link(service, file_id, category='other'):
         except Exception as e:
             print(f"Note: Could not set permissions for {file_id}: {e}", file=sys.stderr)
         
-        # Return direct links that work without login
-        if category in ['image', 'audio']:
-            # Direct download/view link
-            return f"https://drive.google.com/uc?export=view&id={file_id}"
-        elif category in ['video', 'pdf']:
+        # Return links that work without Google login
+        if category == 'image':
+            # Direct image link via lh3
+            return f"https://lh3.googleusercontent.com/d/{file_id}"
+        elif category in ['video', 'audio', 'pdf']:
             # Embeddable preview link
             return f"https://drive.google.com/file/d/{file_id}/preview"
         else:
