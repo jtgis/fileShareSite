@@ -184,16 +184,22 @@ def sync_users_from_gdrive(root_folder_id):
             # Determine file category
             category = get_file_category(ext)
             
-            # Get shareable link with proper format for category
-            link = get_shareable_link(service, file['id'], category)
+            # Make file publicly accessible
+            try:
+                service.permissions().create(
+                    fileId=file['id'],
+                    body={'role': 'reader', 'type': 'anyone'},
+                    fields='id'
+                ).execute()
+            except Exception as e:
+                print(f"Note: Could not set permissions for {file['id']}: {e}", file=sys.stderr)
             
             user_files.append({
                 'name': name,
                 'id': file['id'],
                 'size': format_bytes(size),
                 'ext': ext,
-                'category': category,
-                'link': link
+                'category': category
             })
         
         users_data[username] = sorted(user_files, key=lambda f: f['name'])
