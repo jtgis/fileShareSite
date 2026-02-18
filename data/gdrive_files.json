@@ -1,14 +1,4 @@
 {
-  "seliger": [
-    {
-      "name": "single-fresh-red-strawberry-on-table-green-background-food-fruit-sweet-macro-juicy-plant-image-photo.jpg",
-      "id": "10xVdjEYo0xuAPlbpaiVwyVnL3nAEQoc2",
-      "size": "22.2 KB",
-      "ext": "jpg",
-      "category": "image",
-      "link": "https://lh3.googleusercontent.com/d/10xVdjEYo0xuAPlbpaiVwyVnL3nAEQoc2"
-    }
-  ],
   "testuser": [
     {
       "name": "file-example_PDF_1MB.pdf",
@@ -24,7 +14,7 @@
       "size": "2.4 MB",
       "ext": "jpg",
       "category": "image",
-      "link": "https://lh3.googleusercontent.com/d/1c71gcKcv5TvZqPktDNfrf6jn6JDYh_ny"
+      "link": "https://drive.google.com/uc?export=view&id=1c71gcKcv5TvZqPktDNfrf6jn6JDYh_ny"
     },
     {
       "name": "file_example_MP3_5MG (1).mp3",
@@ -32,7 +22,7 @@
       "size": "5.1 MB",
       "ext": "mp3",
       "category": "audio",
-      "link": "https://drive.google.com/file/d/12dme6cNn48NH6n0wdr6Hu9hUmLuFVO40/preview"
+      "link": "https://drive.google.com/uc?export=view&id=12dme6cNn48NH6n0wdr6Hu9hUmLuFVO40"
     },
     {
       "name": "file_example_MP4_1920_18MG.mp4",

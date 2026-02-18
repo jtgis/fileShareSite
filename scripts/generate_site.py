@@ -4,6 +4,7 @@ Generate static HTML site from user data and file listings.
 """
 import json
 import sys
+import base64
 from pathlib import Path
 
 def get_file_icon(category):
@@ -97,15 +98,26 @@ def generate_index_html(users_data, users_config):
         user_hashes[username] = config.get('password_hash', '')
     
     # Create file data for each user (sorted by type then name)
-    user_files_data = {}
+    # Then XOR-encrypt each user's file list with their password hash
+    user_files_encrypted = {}
     for username, files in users_data.items():
         if isinstance(files, list):
-            user_files_data[username] = sorted(files, key=lambda f: (f.get('category', 'other'), f.get('name', '')))
+            sorted_files = sorted(files, key=lambda f: (f.get('category', 'other'), f.get('name', '')))
         else:
-            user_files_data[username] = []
+            sorted_files = []
+        plaintext = json.dumps(sorted_files)
+        key = user_hashes.get(username, '')
+        if key:
+            # XOR encrypt the JSON string with the password hash
+            key_bytes = key.encode('utf-8')
+            plain_bytes = plaintext.encode('utf-8')
+            encrypted = bytes([plain_bytes[i] ^ key_bytes[i % len(key_bytes)] for i in range(len(plain_bytes))])
+            user_files_encrypted[username] = base64.b64encode(encrypted).decode('ascii')
+        else:
+            user_files_encrypted[username] = ''
     
     user_hashes_json = json.dumps(user_hashes)
-    user_files_json = json.dumps(user_files_data)
+    user_files_json = json.dumps(user_files_encrypted)
     
     # CSS as a separate string to avoid f-string hash issues
     css = """        * {
@@ -620,7 +632,17 @@ def generate_index_html(users_data, users_config):
 
     <script>
         const USER_HASHES = {user_hashes_json};
-        const USER_FILES = {user_files_json};
+        const USER_FILES_ENC = {user_files_json};
+
+        function xorDecrypt(b64, key) {{
+            const raw = atob(b64);
+            let out = '';
+            for (let i = 0; i < raw.length; i++) {{
+                out += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }}
+            return out;
+        }}
+
         function fileIcon(cat) {{
             const icons = {{
                 video: '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
@@ -663,6 +685,18 @@ def generate_index_html(users_data, users_config):
                 return;
             }}
 
+            // Decrypt file data using the password hash
+            const enc = USER_FILES_ENC[username] || '';
+            let decrypted = [];
+            if (enc) {{
+                try {{
+                    decrypted = JSON.parse(xorDecrypt(enc, passwordHash));
+                }} catch(e) {{
+                    errorDiv.textContent = 'error decrypting files';
+                    return;
+                }}
+            }}
+            sessionStorage.setItem('userFiles', JSON.stringify(decrypted));
             sessionStorage.setItem('username', username);
             sessionStorage.setItem('displayName', username.charAt(0).toUpperCase() + username.slice(1));
             showFiles();
@@ -670,6 +704,7 @@ def generate_index_html(users_data, users_config):
 
         function logout() {{
             sessionStorage.clear();
+            currentFiles = [];
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('filesSection').classList.remove('active');
             document.getElementById('detailView').classList.remove('active');
@@ -687,7 +722,11 @@ def generate_index_html(users_data, users_config):
             document.getElementById('detailView').classList.remove('active');
             document.getElementById('displayName').textContent = sessionStorage.getItem('displayName');
 
-            currentFiles = USER_FILES[username] || [];
+            try {{
+                currentFiles = JSON.parse(sessionStorage.getItem('userFiles') || '[]');
+            }} catch(e) {{
+                currentFiles = [];
+            }}
             renderFileList();
         }}
 

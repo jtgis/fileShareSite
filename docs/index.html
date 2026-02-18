@@ -508,7 +508,17 @@
 
     <script>
         const USER_HASHES = {"testuser": "b55c8792d1ce458e279308835f8a97b580263503e76e1998e279703e35ad0c2e", "seliger": "e6a97ab3a50a32a588983047c4d19d9841e54266dc88deff7e8985608ad1ef2d"};
-        const USER_FILES = {"seliger": [{"name": "single-fresh-red-strawberry-on-table-green-background-food-fruit-sweet-macro-juicy-plant-image-photo.jpg", "id": "10xVdjEYo0xuAPlbpaiVwyVnL3nAEQoc2", "size": "22.2 KB", "ext": "jpg", "category": "image", "link": "https://lh3.googleusercontent.com/d/10xVdjEYo0xuAPlbpaiVwyVnL3nAEQoc2"}], "testuser": [{"name": "file_example_MP3_5MG (1).mp3", "id": "12dme6cNn48NH6n0wdr6Hu9hUmLuFVO40", "size": "5.1 MB", "ext": "mp3", "category": "audio", "link": "https://drive.google.com/file/d/12dme6cNn48NH6n0wdr6Hu9hUmLuFVO40/preview"}, {"name": "file_example_JPG_2500kB.jpg", "id": "1c71gcKcv5TvZqPktDNfrf6jn6JDYh_ny", "size": "2.4 MB", "ext": "jpg", "category": "image", "link": "https://lh3.googleusercontent.com/d/1c71gcKcv5TvZqPktDNfrf6jn6JDYh_ny"}, {"name": "file-example_PDF_1MB.pdf", "id": "1dR_GI0zJf7pXqrXy34TRKISk7xjUY_y9", "size": "1017.7 KB", "ext": "pdf", "category": "pdf", "link": "https://drive.google.com/file/d/1dR_GI0zJf7pXqrXy34TRKISk7xjUY_y9/preview"}, {"name": "file_example_MP4_1920_18MG.mp4", "id": "1om4TDXM0P2Y99txpk3Uwjuc_NkDqp9zF", "size": "17.0 MB", "ext": "mp4", "category": "video", "link": "https://drive.google.com/file/d/1om4TDXM0P2Y99txpk3Uwjuc_NkDqp9zF/preview"}]};
+        const USER_FILES_ENC = {"testuser": "OU4XDVlaXBBeEUEDXVldOldPWF5AVF1seDYLPgx6JRUQARsYXkUDEUkXFAxVGwMYRwMFXVpVBQZ9W1VcfisEC1JCUREOf0wLDGQOKUFzbioGBxsfEBpLWk8DGlsZFVcbCRB/dBEZEBEAT0JHCxkbVRUBFRUXElAER1AGC0IaEF9CF1QWXF5WEEgRQQldW1NHCBcbW0RMSEAPSRcFS14UUBZXXVlUWVUdBlhbSkRaBl0dQlhLQw1FDFZCRw1UXgNXBlhQVVt5VwZcfytTWgVPAUABcUYJUG1eeRN+N3YDUhdFHBJNEVtRXgAVDEUTX1BUAG1SQVZdQwlWais0dzwAUFIFXiEWXUlVRh1DR11RGl8SFQhQBwlfUH4FTlRtQThEaFtGcn1TQlVTXVhTe31gUDpcThsbEBEWWk8ERgpDEFdMARUuehUVEkZUGxEWDxhHWEdeERwYGlBUEl0GVkUbFwIQEF9eVFdWRxsWR11QV1NHCBcbX0RHFUAPTktUEVsTBxtSDFdQVVdKUgwIG0BbWldPSVxCTAVFXANPR1BTXwRbBwNRUH5TRVBjQD9AaVJMIXxRS1EGWQsFfyU9WDxcHEBIGUNDFVdTCVRBXxQXXgxeUhRWSFlVQ1kDZzF9cT0EdXIcRldTEh9FFV8BEwMZGlRWZWZweQMfeVNWFGgSQD0bBgE3anxwYQ8GGw9hbGccCxUVExJLUUlQRAJBGwZSBA8eBRZ4dxIfRRVTHUUbAxhHQlNfFRwTR1BUFQFXDEAcQA8VQUhTXxBIEUEJXVtTRwgXG1tETEhAD0kXBUteFFAWV11ZVFlVHQZYW0pXUFVdSlYYCFNibCJ6BRsuVlRCPRNHbRoLA21gL3gwDgNNUjBraEAKH0hKVkMPXRYbSk4VQxJcV15QEglFFVAMXVxmXR1TWklbVWwoYwE+VQlRAjpTDXgkFlpJBkYdQ0ddURpfEhUIXF0MbHdtKwgxC25bDExIQl0AYEdZEFRpK1p9SEhcSHEbGxARFlpPBEYKQxBUVRsFQ3V1Gx5EEwYdQBcCRRBaSQcSFBgRVgdMBF5YEEwaChIURVxUVgoVGkUTVVBWDhANGRVYRxFDRltLHwdADBRQGwRXWF5eAR8AClkaXgxeUhZXHwlXXgEyfDl0BzIHYQkLQktFWwAwQFwQUmZ3UyFDRwBNdhwVQVAXDVUUEBg/"};
+
+        function xorDecrypt(b64, key) {
+            const raw = atob(b64);
+            let out = '';
+            for (let i = 0; i < raw.length; i++) {
+                out += String.fromCharCode(raw.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return out;
+        }
+
         function fileIcon(cat) {
             const icons = {
                 video: '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
@@ -551,6 +561,18 @@
                 return;
             }
 
+            // Decrypt file data using the password hash
+            const enc = USER_FILES_ENC[username] || '';
+            let decrypted = [];
+            if (enc) {
+                try {
+                    decrypted = JSON.parse(xorDecrypt(enc, passwordHash));
+                } catch(e) {
+                    errorDiv.textContent = 'error decrypting files';
+                    return;
+                }
+            }
+            sessionStorage.setItem('userFiles', JSON.stringify(decrypted));
             sessionStorage.setItem('username', username);
             sessionStorage.setItem('displayName', username.charAt(0).toUpperCase() + username.slice(1));
             showFiles();
@@ -558,6 +580,7 @@
 
         function logout() {
             sessionStorage.clear();
+            currentFiles = [];
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('filesSection').classList.remove('active');
             document.getElementById('detailView').classList.remove('active');
@@ -575,7 +598,11 @@
             document.getElementById('detailView').classList.remove('active');
             document.getElementById('displayName').textContent = sessionStorage.getItem('displayName');
 
-            currentFiles = USER_FILES[username] || [];
+            try {
+                currentFiles = JSON.parse(sessionStorage.getItem('userFiles') || '[]');
+            } catch(e) {
+                currentFiles = [];
+            }
             renderFileList();
         }
 
