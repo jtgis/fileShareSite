@@ -247,6 +247,16 @@
             vertical-align: middle;
         }
 
+        .file-row .col-icon .thumb {
+            width: 28px;
+            height: 28px;
+            object-fit: cover;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-right: 6px;
+            background: #f0f0f0;
+        }
+
         .file-row .col-name {
             color: #333;
         }
@@ -777,7 +787,11 @@
                 levelFiles.forEach((f, i) => {
                     const gi = currentFiles.indexOf(f);
                     html += '<tr class="file-row">';
-                    html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + catLabel(f.category) + '</span></td>';
+                    if (f.category === 'image') {
+                        html += '<td class="col-icon">' + fileIcon(f.category) + '<img class="thumb" src="https://lh3.googleusercontent.com/d/' + f.id + '=s56" alt=""><span class="type-label">' + catLabel(f.category) + '</span></td>';
+                    } else {
+                        html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + catLabel(f.category) + '</span></td>';
+                    }
                     html += '<td class="col-name">' + f.name + '</td>';
                     html += '<td class="col-size">' + f.size + '</td>';
                     html += '<td class="col-actions">';
