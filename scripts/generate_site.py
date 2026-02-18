@@ -338,7 +338,7 @@ def generate_index_html(users_data, users_config):
         }
 
         .file-row .col-icon {
-            width: 100px;
+            width: 140px;
             padding-right: 0;
             text-transform: none;
             white-space: nowrap;
@@ -581,6 +581,107 @@ def generate_index_html(users_data, users_config):
             font-size: 12px;
         }
 
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-overlay .fs-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .fullscreen-overlay .fs-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .fullscreen-overlay .fs-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .fullscreen-overlay .fs-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            background: rgba(0,0,0,0.85);
+        }
+
+        .fullscreen-overlay .fs-bar .fs-name {
+            color: #ccc;
+            font-size: 13px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .fullscreen-overlay .fs-bar .fs-counter {
+            color: #888;
+            font-size: 12px;
+            margin: 0 16px;
+        }
+
+        .fullscreen-overlay .fs-bar button {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 4px 14px;
+            font-size: 13px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            margin-left: 8px;
+            width: auto;
+        }
+
+        .fullscreen-overlay .fs-bar button:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .fullscreen-btn {
+            display: inline-block;
+            padding: 6px 16px;
+            background: transparent;
+            color: #999;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            letter-spacing: 1px;
+            width: auto;
+            margin-top: 0;
+            margin-left: 8px;
+        }
+
+        .fullscreen-btn:hover {
+            color: #333;
+            border-color: #333;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 10px;
@@ -721,6 +822,18 @@ def generate_index_html(users_data, users_config):
                 <button class="nav-btn" id="prevBtn" onclick="navFile(-1)">← prev</button>
                 <span class="nav-counter" id="navCounter"></span>
                 <button class="nav-btn" id="nextBtn" onclick="navFile(1)">next →</button>
+                <button class="fullscreen-btn" id="fullscreenBtn" onclick="enterFullscreen()">fullscreen</button>
+            </div>
+        </div>
+
+        <div class="fullscreen-overlay" id="fsOverlay">
+            <div class="fs-content" id="fsContent"></div>
+            <div class="fs-bar">
+                <span class="fs-name" id="fsName"></span>
+                <span class="fs-counter" id="fsCounter"></span>
+                <button onclick="fsNav(-1)" id="fsPrev">← prev</button>
+                <button onclick="fsNav(1)" id="fsNext">next →</button>
+                <button onclick="exitFullscreen()">close</button>
             </div>
         </div>
     </div>
@@ -912,7 +1025,7 @@ def generate_index_html(users_data, users_config):
                     const gi = currentFiles.indexOf(f);
                     html += '<tr class="file-row">';
                     if (f.category === 'image') {{
-                        html += '<td class="col-icon">' + fileIcon(f.category) + '<img class="thumb" src="https://lh3.googleusercontent.com/d/' + f.id + '=s56" alt=""><span class="type-label">' + catLabel(f.category) + '</span></td>';
+                        html += '<td class="col-icon">' + fileIcon(f.category) + '<img class="thumb" src="https://drive.google.com/thumbnail?id=' + f.id + '&sz=w56" alt=""><span class="type-label">' + catLabel(f.category) + '</span></td>';
                     }} else {{
                         html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + catLabel(f.category) + '</span></td>';
                     }}
@@ -1027,6 +1140,68 @@ def generate_index_html(users_data, users_config):
                 renderFileList();
             }}
         }}
+
+        // Fullscreen mode
+        let fsActive = false;
+
+        function getFsHtml(file) {{
+            if (!file) return '';
+            const isNative = googleNativeTypes.includes(file.category);
+            if (file.category === 'image') {{
+                return '<img src="https://lh3.googleusercontent.com/d/' + file.id + '" alt="' + file.name + '">';
+            }} else if (isNative) {{
+                const embedBase = file.category === 'gsheet' ? 'https://docs.google.com/spreadsheets/d/' : file.category === 'gslides' ? 'https://docs.google.com/presentation/d/' : file.category === 'gdoc' ? 'https://docs.google.com/document/d/' : file.category === 'gform' ? 'https://docs.google.com/forms/d/' : 'https://docs.google.com/drawings/d/';
+                return '<iframe src="' + embedBase + file.id + '/preview"></iframe>';
+            }} else if (file.category === 'video') {{
+                return '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay"></iframe>';
+            }} else if (file.category === 'pdf') {{
+                return '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview"></iframe>';
+            }}
+            return '';
+        }}
+
+        function updateFs() {{
+            const file = levelFiles[currentIndex];
+            if (!file) return;
+            document.getElementById('fsContent').innerHTML = getFsHtml(file);
+            document.getElementById('fsName').textContent = file.name;
+            document.getElementById('fsCounter').textContent = (currentIndex + 1) + ' / ' + levelFiles.length;
+            document.getElementById('fsPrev').style.display = currentIndex <= 0 ? 'none' : '';
+            document.getElementById('fsNext').style.display = currentIndex >= levelFiles.length - 1 ? 'none' : '';
+        }}
+
+        function enterFullscreen() {{
+            if (navContext !== 'folder' || levelFiles.length < 1) return;
+            fsActive = true;
+            updateFs();
+            document.getElementById('fsOverlay').classList.add('active');
+        }}
+
+        function exitFullscreen() {{
+            fsActive = false;
+            document.getElementById('fsOverlay').classList.remove('active');
+            // Sync detail view with current index
+            showDetail(levelFiles[currentIndex]);
+        }}
+
+        function fsNav(delta) {{
+            const newIndex = currentIndex + delta;
+            if (newIndex >= 0 && newIndex < levelFiles.length) {{
+                currentIndex = newIndex;
+                updateFs();
+            }}
+        }}
+
+        document.addEventListener('keydown', function(e) {{
+            if (!fsActive) return;
+            if (e.key === 'Escape') {{
+                exitFullscreen();
+            }} else if (e.key === 'ArrowLeft') {{
+                fsNav(-1);
+            }} else if (e.key === 'ArrowRight') {{
+                fsNav(1);
+            }}
+        }});
 
         window.addEventListener('popstate', function(e) {{
             const detail = document.getElementById('detailView');
