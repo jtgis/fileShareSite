@@ -778,6 +778,27 @@ def generate_index_html(users_data, users_config):
                 font-size: 12px;
                 padding: 8px 14px;
             }
+
+            .fullscreen-overlay .fs-bar {
+                flex-wrap: wrap;
+                gap: 6px;
+                padding: 8px 12px;
+            }
+
+            .fullscreen-overlay .fs-bar .fs-name {
+                width: 100%;
+                margin-right: 0;
+                font-size: 12px;
+            }
+
+            .fullscreen-overlay .fs-bar .fs-counter {
+                font-size: 11px;
+            }
+
+            .fullscreen-overlay .fs-bar button {
+                padding: 6px 14px;
+                font-size: 13px;
+            }
         }
 """
     
@@ -1109,7 +1130,7 @@ def generate_index_html(users_data, users_config):
                 const embedBase = file.category === 'gsheet' ? 'https://docs.google.com/spreadsheets/d/' : file.category === 'gslides' ? 'https://docs.google.com/presentation/d/' : file.category === 'gdoc' ? 'https://docs.google.com/document/d/' : file.category === 'gform' ? 'https://docs.google.com/forms/d/' : 'https://docs.google.com/drawings/d/';
                 preview.innerHTML = '<iframe src="' + embedBase + file.id + '/preview"></iframe>';
             }} else if (file.category === 'video') {{
-                preview.innerHTML = '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay"></iframe>';
+                preview.innerHTML = '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
             }} else if (file.category === 'audio') {{
                 preview.innerHTML = '<iframe class="audio-frame" src="https://drive.google.com/file/d/' + file.id + '/preview"></iframe>';
             }} else if (file.category === 'image') {{
@@ -1143,7 +1164,12 @@ def generate_index_html(users_data, users_config):
             }}
         }}
 
+        function stopMedia() {{
+            document.getElementById('previewArea').innerHTML = '';
+        }}
+
         function backToList() {{
+            stopMedia();
             document.getElementById('detailView').classList.remove('active');
             document.getElementById('filesSection').classList.add('active');
             if (currentView === 'folder') {{
@@ -1163,7 +1189,7 @@ def generate_index_html(users_data, users_config):
                 const embedBase = file.category === 'gsheet' ? 'https://docs.google.com/spreadsheets/d/' : file.category === 'gslides' ? 'https://docs.google.com/presentation/d/' : file.category === 'gdoc' ? 'https://docs.google.com/document/d/' : file.category === 'gform' ? 'https://docs.google.com/forms/d/' : 'https://docs.google.com/drawings/d/';
                 return '<iframe src="' + embedBase + file.id + '/preview"></iframe>';
             }} else if (file.category === 'video') {{
-                return '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay"></iframe>';
+                return '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
             }} else if (file.category === 'pdf') {{
                 return '<iframe src="https://drive.google.com/file/d/' + file.id + '/preview"></iframe>';
             }}
@@ -1215,7 +1241,12 @@ def generate_index_html(users_data, users_config):
 
         window.addEventListener('popstate', function(e) {{
             const detail = document.getElementById('detailView');
+            if (fsActive) {{
+                exitFullscreen();
+                return;
+            }}
             if (detail.classList.contains('active')) {{
+                stopMedia();
                 detail.classList.remove('active');
                 document.getElementById('filesSection').classList.add('active');
                 renderFileList();
