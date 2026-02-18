@@ -596,21 +596,21 @@ def generate_index_html(users_data, users_config):
             height: 100vh;
             background: #000;
             z-index: 9999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
 
         .fullscreen-overlay.active {
-            display: flex;
+            display: block;
         }
 
         .fullscreen-overlay .fs-content {
-            flex: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
             overflow: hidden;
         }
 
@@ -627,17 +627,17 @@ def generate_index_html(users_data, users_config):
         }
 
         .fullscreen-overlay .fs-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
-            width: 100%;
-            padding: 10px 20px;
+            padding: 0 16px;
             box-sizing: border-box;
-            background: rgba(0,0,0,0.85);
-            flex-shrink: 0;
-            position: relative;
-            z-index: 10;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
         }
 
         .fullscreen-overlay .fs-bar .fs-name {
@@ -647,24 +647,26 @@ def generate_index_html(users_data, users_config):
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-right: auto;
+            margin-right: 12px;
         }
 
         .fullscreen-overlay .fs-bar .fs-counter {
             color: #888;
             font-size: 12px;
+            margin-right: 12px;
         }
 
         .fullscreen-overlay .fs-bar button {
             background: transparent;
             color: #ccc;
             border: 1px solid #555;
-            padding: 4px 14px;
+            padding: 6px 16px;
             font-size: 13px;
             font-family: 'Courier New', Courier, monospace;
             cursor: pointer;
             width: auto;
-            margin-top: 0;
+            margin: 0 0 0 8px;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .fullscreen-overlay .fs-bar button:hover {
@@ -780,15 +782,22 @@ def generate_index_html(users_data, users_config):
             }
 
             .fullscreen-overlay .fs-bar {
+                height: auto;
+                min-height: 52px;
                 flex-wrap: wrap;
                 gap: 6px;
                 padding: 8px 12px;
             }
 
+            .fullscreen-overlay .fs-content {
+                bottom: 70px;
+            }
+
             .fullscreen-overlay .fs-bar .fs-name {
                 width: 100%;
-                margin-right: 0;
+                flex: none;
                 font-size: 12px;
+                margin-right: 0;
             }
 
             .fullscreen-overlay .fs-bar .fs-counter {
@@ -796,8 +805,8 @@ def generate_index_html(users_data, users_config):
             }
 
             .fullscreen-overlay .fs-bar button {
-                padding: 6px 14px;
-                font-size: 13px;
+                padding: 8px 16px;
+                font-size: 14px;
             }
         }
 """
