@@ -810,6 +810,7 @@ def generate_index_html(users_data, users_config):
         let currentView = 'root';
         let currentFolder = '';
         let folderFiles = [];
+        let folderNames = [];
 
         function renderFileList() {{
             const grid = document.getElementById('filesGrid');
@@ -825,14 +826,15 @@ def generate_index_html(users_data, users_config):
 
             // Root view: show folders as clickable rows, then root files
             const folders = [...new Set(currentFiles.filter(f => f.folder).map(f => f.folder.split('/')[0]))];
+            folderNames = folders;
             const rootFiles = currentFiles.filter(f => !f.folder);
 
             let html = '';
             if (folders.length) {{
                 html += '<table class="file-table">';
-                folders.forEach(name => {{
+                folders.forEach((name, fi) => {{
                     const count = currentFiles.filter(f => f.folder && f.folder.split('/')[0] === name).length;
-                    html += '<tr class="file-row folder-row" onclick="openFolder(\'' + name.replace(/'/g, "\\'") + '\')">';
+                    html += '<tr class="file-row folder-row" onclick="openFolder(' + fi + ')">';
                     html += '<td class="col-icon">' + folderSvg + '<span class="type-label">folder</span></td>';
                     html += '<td class="col-name">' + name + '</td>';
                     html += '<td class="col-size">' + count + ' file' + (count !== 1 ? 's' : '') + '</td>';
@@ -884,7 +886,9 @@ def generate_index_html(users_data, users_config):
             grid.innerHTML = html;
         }}
 
-        function openFolder(name) {{
+        function openFolder(idx) {{
+            const name = folderNames[idx];
+            if (!name) return;
             currentView = 'folder';
             currentFolder = name;
             history.pushState({{view: 'folder', folder: name}}, '');
