@@ -76,22 +76,31 @@ def list_files_in_folder(service, folder_id):
         print(f"Error listing files in folder {folder_id}: {e}", file=sys.stderr)
         raise
 
-def get_shareable_link(service, file_id):
+def get_shareable_link(service, file_id, category='other'):
     """Get a shareable link for a file."""
     try:
-        # Try to make it publicly accessible
+        # Make the file publicly accessible
         try:
             service.permissions().create(
                 fileId=file_id,
                 body={'role': 'reader', 'type': 'anyone'},
                 fields='id'
             ).execute()
-        except:
-            # Already shared or permission denied
-            pass
+            print(f"✓ Made file {file_id} public", file=sys.stderr)
+        except Exception as e:
+            print(f"Note: Could not set permissions for {file_id}: {e}", file=sys.stderr)
         
-        file = service.files().get(fileId=file_id, fields='webViewLink').execute()
-        return file.get('webViewLink', '')
+        # Return direct links that work without login
+        if category in ['image', 'audio']:
+            # Direct download/view link
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+        elif category in ['video', 'pdf']:
+            # Embeddable preview link
+            return f"https://drive.google.com/file/d/{file_id}/preview"
+        else:
+            # Direct download for other files
+            return f"https://drive.google.com/uc?export=download&id={file_id}"
+            
     except Exception as e:
         print(f"Error getting shareable link for {file_id}: {e}", file=sys.stderr)
         return f"https://drive.google.com/file/d/{file_id}/view"
@@ -175,8 +184,8 @@ def sync_users_from_gdrive(root_folder_id):
             # Determine file category
             category = get_file_category(ext)
             
-            # Get shareable link
-            link = get_shareable_link(service, file['id'])
+            # Get shareable link with proper format for category
+            link = get_shareable_link(service, file['id'], category)
             
             user_files.append({
                 'name': name,

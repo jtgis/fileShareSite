@@ -31,8 +31,9 @@ def render_file_card(file):
                 <span class="file-icon">{icon}</span>
                 <span class="file-name">{name}</span>
             </div>
+            <iframe src="{link}" width="100%" height="200" frameborder="0" allowfullscreen style="border-radius: 8px; margin: 10px 0;"></iframe>
             <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">Open in Google Drive</a>
+            <a href="{link}" target="_blank" class="file-link">Open in New Tab</a>
         </div>
         '''
     elif file['category'] == 'audio':
@@ -47,7 +48,7 @@ def render_file_card(file):
                 <source src="{link}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
-            <a href="{link}" target="_blank" class="file-link">Open in Google Drive</a>
+            <a href="{link}" download class="file-link">Download</a>
         </div>
         '''
     elif file['category'] == 'image':
@@ -59,7 +60,7 @@ def render_file_card(file):
             </div>
             <img src="{link}" alt="{name}" class="file-image" loading="lazy">
             <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">Open in Google Drive</a>
+            <a href="{link}" target="_blank" class="file-link">View Full Size</a>
         </div>
         '''
     elif file['category'] == 'pdf':
@@ -69,8 +70,9 @@ def render_file_card(file):
                 <span class="file-icon">{icon}</span>
                 <span class="file-name">{name}</span>
             </div>
+            <iframe src="{link}" width="100%" height="300" frameborder="0" style="border-radius: 8px; margin: 10px 0;"></iframe>
             <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">View PDF in Google Drive</a>
+            <a href="{link}" target="_blank" class="file-link">Open in New Tab</a>
         </div>
         '''
     else:
@@ -81,7 +83,7 @@ def render_file_card(file):
                 <span class="file-name">{name}</span>
             </div>
             <div class="file-size">{size}</div>
-            <a href="{link}" target="_blank" class="file-link">Download from Google Drive</a>
+            <a href="{link}" download class="file-link">Download</a>
         </div>
         '''
 
