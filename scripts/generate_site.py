@@ -97,15 +97,24 @@ def generate_index_html(users_data, users_config):
     for username, config in users_config.items():
         user_hashes[username] = config.get('password_hash', '')
     
-    # Create file data for each user (sorted by type then name)
-    # Then XOR-encrypt each user's file list with their password hash
+    # Keep only fields required by the frontend UI before embedding data in HTML.
+    # Then XOR-encrypt each user's file list with their password hash.
     user_files_encrypted = {}
     for username, files in users_data.items():
         if isinstance(files, list):
             sorted_files = sorted(files, key=lambda f: (f.get('folder', ''), f.get('category', 'other'), f.get('name', '')))
+            minimal_files = []
+            for f in sorted_files:
+                minimal_files.append({
+                    'id': f.get('id', ''),
+                    'name': f.get('name', ''),
+                    'size': f.get('size', '0 B'),
+                    'category': f.get('category', 'other'),
+                    'folder': f.get('folder', '')
+                })
         else:
-            sorted_files = []
-        plaintext = json.dumps(sorted_files)
+            minimal_files = []
+        plaintext = json.dumps(minimal_files)
         key = user_hashes.get(username, '')
         if key:
             # XOR encrypt the JSON string with the password hash
@@ -324,75 +333,164 @@ def generate_index_html(users_data, users_config):
             text-decoration: none;
         }
 
-        .file-table {
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 2px;
+            margin-top: 12px;
+        }
+
+        .tile-card {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            cursor: pointer;
+            background: #f0f0f0;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .tile-card:hover {
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+        }
+
+        .tile-preview {
+            position: absolute;
+            inset: 0;
+            background: #f0f0f0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tile-preview img,
+        .tile-preview iframe,
+        .tile-preview video {
             width: 100%;
-            border-collapse: collapse;
-        }
-
-        .file-row {
-            cursor: default;
-            border-bottom: 1px solid #eee;
-        }
-
-        .file-row:hover {
+            height: 100%;
+            display: block;
+            border: none;
+            object-fit: cover;
             background: #f0f0f0;
         }
 
-        .file-row td {
-            padding: 12px 8px;
-            font-size: 14px;
+        .tile-preview iframe {
+            pointer-events: none;
         }
 
-        .file-row .col-icon {
-            width: 140px;
-            padding-right: 0;
-            text-transform: none;
-            white-space: nowrap;
+        .tile-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+            padding: 22px 8px 7px 8px;
+            pointer-events: none;
         }
 
-        .file-row .col-icon svg {
-            width: 18px;
-            height: 18px;
-            vertical-align: middle;
+        .tile-label {
+            color: #fff;
+            font-size: 13px;
+            line-height: 1.3;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .tile-preview .video-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1.5px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .tile-preview .video-badge svg {
+            width: 20px;
+            height: 20px;
+            fill: #fff;
+            stroke: none;
+            margin-left: 2px;
+        }
+
+        .tile-preview .audio-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1.5px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .tile-preview .audio-badge svg {
+            width: 20px;
+            height: 20px;
             fill: none;
-            stroke: #999;
+            stroke: #fff;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .tile-preview .audio-bg-icon {
+            width: 48px;
+            height: 48px;
+            fill: none;
+            stroke: #ccc;
             stroke-width: 1.5;
             stroke-linecap: round;
             stroke-linejoin: round;
-            margin-right: 6px;
         }
 
-        .file-row .col-icon .type-label {
-            color: #999;
-            font-size: 12px;
-            vertical-align: middle;
+        .tile-fallback {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #aaa;
         }
 
-        .file-row .col-icon .thumb {
-            width: 28px;
-            height: 28px;
-            object-fit: cover;
-            border-radius: 3px;
-            vertical-align: middle;
-            margin-right: 6px;
+        .tile-fallback svg {
+            width: 30px;
+            height: 30px;
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .folder-tile .tile-preview {
             background: #f0f0f0;
         }
 
-        .file-row .col-name {
-            color: #333;
-        }
-
-        .file-row .col-size {
-            color: #aaa;
-            text-align: right;
-            width: 90px;
-            font-size: 13px;
-        }
-
-        .file-row .col-actions {
-            text-align: right;
-            white-space: nowrap;
-            width: 260px;
+        .folder-tile .tile-preview svg {
+            width: 52px;
+            height: 52px;
+            fill: none;
+            stroke: #aaa;
+            stroke-width: 1.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .action-btn {
@@ -716,50 +814,9 @@ def generate_index_html(users_data, users_config):
                 padding-bottom: 12px;
             }
 
-            .file-table,
-            .file-table tbody,
-            .file-table tr,
-            .file-table td {
-                display: block;
-                width: 100%;
-            }
-
-            .file-row {
-                padding: 14px 0;
-                border-bottom: 1px solid #eee;
-            }
-
-            .file-row td {
-                padding: 2px 0;
-            }
-
-            .file-row .col-icon {
-                width: auto;
-                margin-bottom: 2px;
-            }
-
-            .file-row .col-name {
-                font-size: 14px;
-                word-break: break-word;
-            }
-
-            .file-row .col-size {
-                text-align: left;
-                width: auto;
-                font-size: 12px;
-                margin-bottom: 6px;
-            }
-
-            .file-row .col-actions {
-                text-align: left;
-                width: auto;
-                white-space: normal;
-            }
-
-            .action-btn {
-                margin-left: 0;
-                margin-right: 6px;
-                margin-top: 4px;
+            .tiles-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 2px;
             }
 
             .detail-name {
@@ -1018,6 +1075,26 @@ def generate_index_html(users_data, users_config):
         let levelFiles = [];
         let folderNames = [];
 
+        function tilePreviewHtml(f) {{
+            if (f.category === 'image') {{
+                return '<img src="https://drive.google.com/thumbnail?id=' + f.id + '&sz=w720" alt="' + f.name + '" loading="lazy">';
+            }}
+            if (f.category === 'pdf') {{
+                return '<iframe src="https://drive.google.com/file/d/' + f.id + '/preview"></iframe>';
+            }}
+            if (f.category === 'audio') {{
+                return '<span class="audio-badge"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></span>';
+            }}
+            if (f.category === 'video') {{
+                return '<img src="https://drive.google.com/thumbnail?id=' + f.id + '&sz=w720" alt="' + f.name + '" loading="lazy"><span class="video-badge"><svg viewBox="0 0 24 24"><polygon points="8,6 19,12 8,18"></polygon></svg></span>';
+            }}
+            if (googleNativeTypes.includes(f.category)) {{
+                const embedBase = f.category === 'gsheet' ? 'https://docs.google.com/spreadsheets/d/' : f.category === 'gslides' ? 'https://docs.google.com/presentation/d/' : f.category === 'gdoc' ? 'https://docs.google.com/document/d/' : f.category === 'gform' ? 'https://docs.google.com/forms/d/' : 'https://docs.google.com/drawings/d/';
+                return '<iframe src="' + embedBase + f.id + '/preview"></iframe>';
+            }}
+            return '<div class="tile-fallback">' + fileIcon(f.category) + '<span>' + catLabel(f.category) + '</span></div>';
+        }}
+
         function renderFileList() {{
             const grid = document.getElementById('filesGrid');
             if (!currentFiles.length) {{
@@ -1057,44 +1134,31 @@ def generate_index_html(users_data, users_config):
                 html += '<a class="action-btn back-folder-btn" href="#" onclick="event.preventDefault();goBack()">\u2190 back</a>';
             }}
 
-            // Render subfolders
-            if (subfolders.length) {{
-                html += '<table class="file-table">';
-                subfolders.forEach((name, fi) => {{
-                    const fullPath = currentFolder ? currentFolder + '/' + name : name;
-                    const count = currentFiles.filter(f => f.folder && (f.folder === fullPath || f.folder.startsWith(fullPath + '/'))).length;
-                    html += '<tr class="file-row folder-row" onclick="openFolder(' + fi + ')">';
-                    html += '<td class="col-icon">' + folderSvg + '<span class="type-label">folder</span></td>';
-                    html += '<td class="col-name">' + name + '</td>';
-                    html += '<td class="col-size">' + count + ' file' + (count !== 1 ? 's' : '') + '</td>';
-                    html += '<td class="col-actions">';
-                    html += '<a class="action-btn" href="#" onclick="event.stopPropagation();event.preventDefault();openFolder(' + fi + ')">view folder contents</a>';
-                    html += '</td>';
-                    html += '</tr>';
-                }});
-                html += '</table>';
+            if (subfolders.length || levelFiles.length) {{
+                html += '<div class="tiles-grid">';
             }}
 
+            // Render subfolders
+            subfolders.forEach((name, fi) => {{
+                const fullPath = currentFolder ? currentFolder + '/' + name : name;
+                const count = currentFiles.filter(f => f.folder && (f.folder === fullPath || f.folder.startsWith(fullPath + '/'))).length;
+                html += '<div class="tile-card folder-tile" onclick="openFolder(' + fi + ')">';
+                html += '<div class="tile-preview">' + folderSvg + '</div>';
+                html += '<div class="tile-overlay"><div class="tile-label">' + name + '</div></div>';
+                html += '</div>';
+            }});
+
             // Render files at this level
-            if (levelFiles.length) {{
-                html += '<table class="file-table">';
-                levelFiles.forEach((f, i) => {{
-                    const gi = currentFiles.indexOf(f);
-                    html += '<tr class="file-row">';
-                    if (f.category === 'image') {{
-                        html += '<td class="col-icon">' + fileIcon(f.category) + '<img class="thumb" src="https://drive.google.com/thumbnail?id=' + f.id + '&sz=w56" alt=""><span class="type-label">' + catLabel(f.category) + '</span></td>';
-                    }} else {{
-                        html += '<td class="col-icon">' + fileIcon(f.category) + '<span class="type-label">' + catLabel(f.category) + '</span></td>';
-                    }}
-                    html += '<td class="col-name">' + f.name + '</td>';
-                    html += '<td class="col-size">' + f.size + '</td>';
-                    html += '<td class="col-actions">';
-                    html += '<a class="action-btn" href="#" onclick="event.preventDefault();openFileDetail(' + gi + ',' + i + ')">view file</a>';
-                    html += '<a class="action-btn" href="' + downloadUrl(f) + '" download>download file</a>';
-                    html += '</td>';
-                    html += '</tr>';
-                }});
-                html += '</table>';
+            levelFiles.forEach((f, i) => {{
+                const gi = currentFiles.indexOf(f);
+                html += '<div class="tile-card file-tile" onclick="openFileDetail(' + gi + ',' + i + ')">';
+                html += '<div class="tile-preview">' + tilePreviewHtml(f) + '</div>';
+                html += '<div class="tile-overlay"><div class="tile-label">' + f.name + '</div></div>';
+                html += '</div>';
+            }});
+
+            if (subfolders.length || levelFiles.length) {{
+                html += '</div>';
             }}
 
             if (!subfolders.length && !levelFiles.length) {{
